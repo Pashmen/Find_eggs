@@ -19,12 +19,16 @@ class Square:
 class Hero(Square):
     ''' The Hero is a creature which is managed by the user '''
     
+    INITIAL_STEP_TIME = 0.15
+    FASTEST_STEP_TIME = 0.04
+    STEP_TIME_ACCELERATION = 0.01
+
     def __init__(self, x, y, color):
         Square.__init__(self, x, y, color)
 
-        self.STEP_TIME = 0.05
+        self.STEP_TIME = self.INITIAL_STEP_TIME
         self.last_step_time = time.time()
-        self.next_step = None
+        self._next_step = None
 
 
     # The Hero moves, moves and takes eggs, moves the pseudo_cutter parts 
@@ -32,15 +36,24 @@ class Hero(Square):
         self.next_step = None
         if time.time() - self.last_step_time > self.STEP_TIME:
             is_pressed = pygame.key.get_pressed()
-            if is_pressed[K_LEFT] and self.x > 0:                
-                self.next_step = (self.x - 1, self.y)
-            elif is_pressed[K_RIGHT] and self.x < field.WIDTH - 1:
-                self.next_step = (self.x + 1, self.y)
-            elif is_pressed[K_UP] and self.y > 0:
-                self.next_step = (self.x, self.y - 1)
-            elif is_pressed[K_DOWN] and self.y < field.HEIGHT - 1:
-                self.next_step = (self.x, self.y + 1)
-            
+            if is_pressed: 
+                self.next_step = [self.x, self.y]
+                if self.STEP_TIME-self.STEP_TIME_ACCELERATION > self.FASTEST_STEP_TIME: 
+                    self.STEP_TIME -= self.STEP_TIME_ACCELERATION
+
+            if is_pressed[K_LEFT] and self.x > 0:            
+                self.next_step[0] -= 1
+                #print(f"STEP_TIME={self.STEP_TIME} diff={time.time() - self.last_step_time} left") 
+            if is_pressed[K_RIGHT] and self.x < field.WIDTH - 1:
+                self.next_step[0] += 1
+                #print(f"STEP_TIME={self.STEP_TIME} diff={time.time() - self.last_step_time} right")   
+            if is_pressed[K_UP] and self.y > 0:
+                self.next_step[1] -= 1
+                #print(f"STEP_TIME={self.STEP_TIME} diff={time.time() - self.last_step_time} up")
+            if is_pressed[K_DOWN] and self.y < field.HEIGHT - 1:
+                self.next_step[1] += 1
+                #print(f"STEP_TIME={self.STEP_TIME} diff={time.time() - self.last_step_time} down")
+
             pygame.event.get() # Cleans the queue
             
             step_is_made = eggs[0].update(self)
@@ -49,11 +62,22 @@ class Hero(Square):
             step_is_made = eggs[3].update(self) or step_is_made
             step_is_made = eggs[4].update(self) or step_is_made
             step_is_made = pseudo_cutter.update(field, self, eggs, cutter, snake) or step_is_made
-            if not step_is_made and \
-            self.next_step != None and field.is_valid(self.next_step[0], self.next_step[1]):            
-                self.make_step()
+            if not step_is_made and self.next_step != None: 
+                if field.is_valid(self.next_step[0], self.next_step[1]):            
+                    self.make_step()
+                # the next conditions will allow to moves along walls
+                elif field.is_valid(self.next_step[0], self.y):
+                    self.next_step = [self.next_step[0], self.y]
+                    self.make_step()
+                elif field.is_valid(self.x, self.next_step[1]):
+                    self.next_step = [self.x, self.next_step[1]]
+                    self.make_step()
+
                 
                 eggs[0].update_times() # Updates times of the last hero steps
+
+        if time.time() - self.last_step_time > 2*self.STEP_TIME:
+            self.STEP_TIME = self.INITIAL_STEP_TIME
 
     def make_step(self):
         self.x, self.y = self.next_step

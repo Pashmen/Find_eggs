@@ -23,13 +23,13 @@ class Camera:
         if hero.x - self.center_x > self.SLACK:
             self.center_x = hero.x - self.SLACK
             self.x = self.center_x - self.WIDTH_HALF
-        elif hero.x - self.center_x < -self.SLACK:
+        if hero.x - self.center_x < -self.SLACK:
             self.center_x = hero.x + self.SLACK
             self.x = self.center_x - self.WIDTH_HALF
-        elif hero.y - self.center_y < -self.SLACK:
+        if hero.y - self.center_y < -self.SLACK:
             self.center_y = hero.y + self.SLACK
             self.y = self.center_y - self.HEIGHT_HALF
-        elif hero.y - self.center_y > self.SLACK:
+        if hero.y - self.center_y > self.SLACK:
             self.center_y = hero.y - self.SLACK
             self.y = self.center_y - self.HEIGHT_HALF
 
