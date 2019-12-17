@@ -28,7 +28,7 @@ class Hero(Square):
 
         self.STEP_TIME = self.INITIAL_STEP_TIME
         self.last_step_time = time.time()
-        self.__next_step = None
+        self.next_step = None
 
 
     # The Hero moves, moves and takes eggs, moves the pseudo_cutter parts 
@@ -44,16 +44,12 @@ class Hero(Square):
 
             if is_pressed[K_LEFT] and self.x > 0:            
                 self.next_step[0] -= 1
-                #print(f"STEP_TIME={self.STEP_TIME} diff={time.time() - self.last_step_time} left") 
             if is_pressed[K_RIGHT] and self.x < field.WIDTH - 1:
                 self.next_step[0] += 1
-                #print(f"STEP_TIME={self.STEP_TIME} diff={time.time() - self.last_step_time} right")   
             if is_pressed[K_UP] and self.y > 0:
                 self.next_step[1] -= 1
-                #print(f"STEP_TIME={self.STEP_TIME} diff={time.time() - self.last_step_time} up")
             if is_pressed[K_DOWN] and self.y < field.HEIGHT - 1:
                 self.next_step[1] += 1
-                #print(f"STEP_TIME={self.STEP_TIME} diff={time.time() - self.last_step_time} down")
 
             pygame.event.get() # Cleans the queue
             
@@ -66,7 +62,7 @@ class Hero(Square):
             if not step_is_made and self.next_step != None: 
                 if field.is_valid(self.next_step[0], self.next_step[1]):
                     # the next condition will not allow diffraction-like behaviour while moving diagonally
-                    if (field.is_valid(self.x, self.next_step[1]) or field.is_valid(self.next_step[0], self.y)):        
+                    if (field.is_valid(self.x, self.next_step[1]) and field.is_valid(self.next_step[0], self.y)):        
                         self.make_step()
                         eggs[0].update_times() # Updates times of the last hero steps
                 # the next conditions will allow to moves along walls
