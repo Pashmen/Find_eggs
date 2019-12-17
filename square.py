@@ -60,12 +60,14 @@ class Hero(Square):
             step_is_made = eggs[4].update(self) or step_is_made
             step_is_made = pseudo_cutter.update(field, self, eggs, cutter, snake) or step_is_made
             if not step_is_made and self.next_step != None: 
-                if field.is_valid(self.next_step[0], self.next_step[1]):
-                    # the next condition will not allow diffraction-like behaviour while moving diagonally
-                    if (field.is_valid(self.x, self.next_step[1]) and field.is_valid(self.next_step[0], self.y)):        
-                        self.make_step()
-                        eggs[0].update_times() # Updates times of the last hero steps
-                # the next conditions will allow to moves along walls
+                if (field.is_valid(self.next_step[0], self.next_step[1]) and \
+                # move straight 
+                ((self.next_step[0] == self.x or self.next_step[1] == self.y) or \
+                # or check whether diffraction-like behaviour will not happen while attepting to move diagonally 
+                (field.is_valid(self.x, self.next_step[1]) and field.is_valid(self.next_step[0], self.y)))):
+                    self.make_step()
+                    eggs[0].update_times()
+                # the next conditions will allow to moves along walls or obsticles while attempting to move diagonally
                 elif field.is_valid(self.next_step[0], self.y):
                     self.next_step = [self.next_step[0], self.y]
                     self.make_step()
@@ -93,7 +95,11 @@ class Box(Square):
             # Checks if the next cell for the Box is valid 
             next_x = 2 * self.x - hero.x
             next_y = 2 * self.y - hero.y
-            if field.is_valid(next_x, next_y):                          
+            if (field.is_valid(next_x, next_y) and \
+            # move straight
+            ((self.x == next_x or self.y == next_y) or \
+            # or check whether diffraction-like behaviour will not happen while attempting to move diagonally
+            field.is_valid(self.x, next_y) and field.is_valid(next_x, self.y))):                          
                 self.x = next_x
                 self.y = next_y
                 hero.make_step()
