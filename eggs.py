@@ -121,7 +121,11 @@ class Egg2(Egg):
             # Checks if the next cell for Egg is valid 
             next_x = 2 * self.x - hero.x
             next_y = 2 * self.y - hero.y
-            if field.is_valid(next_x, next_y):                          
+            if (field.is_valid(next_x, next_y) and \
+            # move straight
+            (self.x == next_x or self.y == next_y) or \
+            # or check whether diffraction-like behaviour will not happen while attempting to move diagonally
+            (field.is_valid(self.x, next_y) and field.is_valid(next_x, self.y))):                      
                 self.x = next_x
                 self.y = next_y
                 hero.make_step()
