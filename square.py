@@ -99,7 +99,8 @@ class Box(Square):
             # move straight
             ((self.x == next_x or self.y == next_y) or \
             # or check whether diffraction-like behaviour will not happen while attempting to move diagonally
-            field.is_valid(self.x, next_y) and field.is_valid(next_x, self.y))):                          
+            field.is_valid(self.x, next_y) and field.is_valid(next_x, self.y) and \
+            field.is_valid(hero.x, hero.next_step[1]) and field.is_valid(hero.next_step[0], hero.y))):                          
                 self.x = next_x
                 self.y = next_y
                 hero.make_step()
