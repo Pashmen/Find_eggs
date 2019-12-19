@@ -20,9 +20,13 @@ class Hero(Square):
     ''' The Hero is a creature which is managed by the user '''
     
     def __init__(self, x, y, color):
+        self.INITIAL_STEP_TIME = 0.22
+        self.FASTEST_STEP_TIME = 0.04
+        self.STEP_TIME_ACCELERATION = 0.03
+
         Square.__init__(self, x, y, color)
 
-        self.STEP_TIME = 0.05
+        self.STEP_TIME = self.INITIAL_STEP_TIME
         self.last_step_time = time.time()
         self.next_step = None
 
@@ -32,15 +36,21 @@ class Hero(Square):
         self.next_step = None
         if time.time() - self.last_step_time > self.STEP_TIME:
             is_pressed = pygame.key.get_pressed()
-            if is_pressed[K_LEFT] and self.x > 0:                
-                self.next_step = (self.x - 1, self.y)
-            elif is_pressed[K_RIGHT] and self.x < field.WIDTH - 1:
-                self.next_step = (self.x + 1, self.y)
-            elif is_pressed[K_UP] and self.y > 0:
-                self.next_step = (self.x, self.y - 1)
-            elif is_pressed[K_DOWN] and self.y < field.HEIGHT - 1:
-                self.next_step = (self.x, self.y + 1)
             
+            if is_pressed[K_LEFT] or is_pressed[K_RIGHT] or is_pressed[K_UP] or is_pressed[K_DOWN]:
+                self.next_step = [self.x, self.y]
+                if self.STEP_TIME-self.STEP_TIME_ACCELERATION > self.FASTEST_STEP_TIME: 
+                    self.STEP_TIME -= self.STEP_TIME_ACCELERATION
+
+            if is_pressed[K_LEFT] and self.x > 0:            
+                self.next_step[0] -= 1
+            if is_pressed[K_RIGHT] and self.x < field.WIDTH - 1:
+                self.next_step[0] += 1
+            if is_pressed[K_UP] and self.y > 0:
+                self.next_step[1] -= 1
+            if is_pressed[K_DOWN] and self.y < field.HEIGHT - 1:
+                self.next_step[1] += 1
+
             pygame.event.get() # Cleans the queue
             
             step_is_made = eggs[0].update(self)
@@ -49,11 +59,26 @@ class Hero(Square):
             step_is_made = eggs[3].update(self) or step_is_made
             step_is_made = eggs[4].update(self) or step_is_made
             step_is_made = pseudo_cutter.update(field, self, eggs, cutter, snake) or step_is_made
-            if not step_is_made and \
-            self.next_step != None and field.is_valid(self.next_step[0], self.next_step[1]):            
-                self.make_step()
-                
-                eggs[0].update_times() # Updates times of the last hero steps
+            if not step_is_made and self.next_step != None: 
+                if (field.is_valid(self.next_step[0], self.next_step[1]) and \
+                # move straight 
+                ((self.next_step[0] == self.x or self.next_step[1] == self.y) or \
+                # or check whether diffraction-like behaviour will not happen while attepting to move diagonally 
+                (field.is_valid(self.x, self.next_step[1]) and field.is_valid(self.next_step[0], self.y)))):
+                    self.make_step()
+                    eggs[0].update_times()
+                # the next conditions will allow to moves along walls or obsticles while attempting to move diagonally
+                elif field.is_valid(self.next_step[0], self.y):
+                    self.next_step = [self.next_step[0], self.y]
+                    self.make_step()
+                    eggs[0].update_times() # Updates times of the last hero steps
+                elif field.is_valid(self.x, self.next_step[1]):
+                    self.next_step = [self.x, self.next_step[1]]
+                    self.make_step()
+                    eggs[0].update_times() # Updates times of the last hero steps
+
+        if time.time() - self.last_step_time > 2*self.STEP_TIME:
+            self.STEP_TIME = self.INITIAL_STEP_TIME
 
     def make_step(self):
         self.x, self.y = self.next_step
@@ -66,11 +91,16 @@ class Box(Square):
     def update(self, field, hero):
         ''' Returns if hero made a step'''
         
-        if hero.next_step != None and (self.x, self.y) == hero.next_step:
+        if hero.next_step != None and [self.x, self.y] == hero.next_step:
             # Checks if the next cell for the Box is valid 
             next_x = 2 * self.x - hero.x
             next_y = 2 * self.y - hero.y
-            if field.is_valid(next_x, next_y):                          
+            if (field.is_valid(next_x, next_y) and \
+            # move straight
+            ((self.x == next_x or self.y == next_y) or \
+            # or check whether diffraction-like behaviour will not happen while attempting to move diagonally
+            field.is_valid(self.x, next_y) and field.is_valid(next_x, self.y) and \
+            field.is_valid(hero.x, hero.next_step[1]) and field.is_valid(hero.next_step[0], hero.y))):                          
                 self.x = next_x
                 self.y = next_y
                 hero.make_step()

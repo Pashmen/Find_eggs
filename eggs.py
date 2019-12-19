@@ -24,7 +24,7 @@ class Egg:
     def update(self, hero):
         '''Returns if the hero made a step'''
         
-        if not self.is_taken and self.is_visible and hero.next_step != None and (self.x, self.y) == hero.next_step:
+        if not self.is_taken and self.is_visible and hero.next_step != None and [self.x, self.y] == hero.next_step:
             self.make_taken()
             hero.make_step()
 
@@ -74,7 +74,7 @@ class Egg0(Egg):
         if not self.is_taken and not self.is_covered and time.time() - self.showing_start_time > self.SHOWING_PERIOD:
             self.make_taken()
                 
-        if hero.next_step != None and (self.x, self.y) == hero.next_step:
+        if hero.next_step != None and [self.x, self.y] == hero.next_step:
             if not self.is_covered:
                 self.update_times()
                 hero.make_step()
@@ -117,11 +117,16 @@ class Egg2(Egg):
         if not self.is_taken and cutter.is_alive and (self.x, self.y) == cutter.mouth and not cutter.mouth_is_open():
             self.make_taken()
             
-        if hero.next_step != None and (self.x, self.y) == hero.next_step:
+        if hero.next_step != None and [self.x, self.y] == hero.next_step:
             # Checks if the next cell for Egg is valid 
             next_x = 2 * self.x - hero.x
             next_y = 2 * self.y - hero.y
-            if field.is_valid(next_x, next_y):                          
+            if (field.is_valid(next_x, next_y) and \
+            # move straight
+            (self.x == next_x or self.y == next_y) or \
+            # or check whether diffraction-like behaviour will not happen while attempting to move diagonally
+            (field.is_valid(self.x, next_y) and field.is_valid(next_x, self.y) and \
+            field.is_valid(hero.x, hero.next_step[1]) and field.is_valid(hero.next_step[0], hero.y))):                      
                 self.x = next_x
                 self.y = next_y
                 hero.make_step()
